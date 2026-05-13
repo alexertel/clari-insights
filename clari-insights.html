@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clari Insights — Revenue Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <style>
+    :root {
+      --primary: #4338CA;
+      --primary-dark: #3730A3;
+      --primary-light: #EEF2FF;
+      --primary-mid: #6366F1;
+      --text: #111827;
+      --text-secondary: #6B7280;
+      --text-light: #9CA3AF;
+      --border: #E5E7EB;
+      --border-light: #F3F4F6;
+      --bg: #FFFFFF;
+      --bg-light: #F9FAFB;
+      --success: #059669;
+      --warning: #D97706;
+      --danger: #DC2626;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Navigation ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; height: 64px; gap: 2rem;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; flex-shrink: 0;
+    }
+    .logo-icon { width: 34px; height: 34px; }
+    .logo-text { font-weight: 700; font-size: 17px; color: var(--text); letter-spacing: -0.3px; }
+    .logo-text span { color: var(--primary); }
+
+    .nav-tabs { display: flex; gap: 4px; margin: 0 auto; }
+
+    .nav-tab {
+      padding: 7px 18px; font-size: 14px; font-weight: 500;
+      color: var(--text-secondary); border: none; background: none;
+      cursor: pointer; border-radius: var(--radius-sm); transition: all 0.15s;
+    }
+    .nav-tab.active {
+      color: var(--text); background: var(--bg-light);
+      box-shadow: 0 0 0 1px var(--border);
+    }
+    .nav-tab:hover:not(.active):not(.disabled) { color: var(--text); background: var(--bg-light); }
+    .nav-tab.disabled { opacity: 0.4; cursor: not-allowed; }
+    .nav-tab .pill {
+      font-size: 10px; font-weight: 600;
+      background: var(--primary-light); color: var(--primary);
+      padding: 2px 7px; border-radius: 99px; margin-left: 6px;
+    }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); transition: all 0.15s;
+    }
+    .icon-btn:hover { background: var(--bg-light); color: var(--text); }
+
+    /* ── Modal ── */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 1000; display: none; align-items: center; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: white; border-radius: var(--radius);
+      padding: 32px; width: 480px; max-width: 92vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: none; background: var(--bg-light); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); font-size: 20px; line-height: 1;
+    }
+    .modal-close:hover { background: var(--border); }
+
+    /* ── Main ── */
+    .main { max-width: 1320px; margin: 0 auto; padding: 44px 2rem 80px; }
+
+    .section-head { margin-bottom: 36px; }
+    .section-head h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; }
+    .section-head p { color: var(--text-secondary); margin-top: 6px; font-size: 15px; }
+
+    /* ── Panels ── */
+    .panels-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 24px; margin-bottom: 52px;
+    }
+
+    .panel {
+      background: white; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+    }
+    .panel-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .panel-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+
+    /* ── Drop Zone ── */
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius-sm);
+      padding: 30px 20px; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: var(--bg-light); margin-bottom: 16px;
+      position: relative;
+    }
+    .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+    .drop-zone.dragover { border-color: var(--primary); background: var(--primary-light); }
+
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; z-index: 1;
+    }
+
+    .dz-icon {
+      width: 44px; height: 44px; margin: 0 auto 10px;
+      background: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow);
+    }
+    .dz-icon svg { width: 22px; height: 22px; stroke: var(--primary); }
+    .dz-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .dz-sub { font-size: 12px; color: var(--text-secondary); }
+    .dz-sub em { color: var(--primary); font-style: normal; font-weight: 500; }
+
+    /* ── File Preview ── */
+    .file-preview {
+      display: none; background: white; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .file-preview.show { display: flex; }
+
+    .fp-thumb {
+      width: 46px; height: 46px; border-radius: 6px; flex-shrink: 0;
+      background: var(--bg-light); overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .fp-thumb img { width: 46px; height: 46px; object-fit: cover; border-radius: 6px; }
+
+    .fp-info { flex: 1; min-width: 0; }
+    .fp-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fp-size { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+
+    .fp-remove {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: none; background: var(--border-light); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); font-size: 18px; flex-shrink: 0;
+    }
+    .fp-remove:hover { background: #FEE2E2; color: var(--danger); }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 14px; }
+    .label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+
+    .input {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: inherit; color: var(--text);
+      background: white; transition: border-color 0.15s; outline: none;
+    }
+    .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67,56,202,0.1); }
+    .input::placeholder { color: var(--text-light); }
+    select.input { cursor: pointer; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 7px; padding: 11px 22px; border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: all 0.15s; border: none;
+    }
+    .btn-primary { background: var(--primary); color: white; width: 100%; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+    .btn-primary:disabled { background: var(--border); color: var(--text-light); cursor: not-allowed; }
+
+    .btn-outline {
+      background: white; color: var(--primary);
+      border: 1.5px solid var(--border); padding: 9px 18px; font-size: 13px;
+    }
+    .btn-outline:hover { background: var(--primary-light); border-color: var(--primary); }
+    .btn-danger { background: white; color: var(--danger); border: 1.5px solid #FECACA; padding: 9px 18px; font-size: 13px; }
+    .btn-danger:hover { background: #FEF2F2; border-color: var(--danger); }
+
+    .btn-loading { pointer-events: none; opacity: 0.8; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.65s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results ── */
+    .results-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .results-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+    .export-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 36px; }
+
+    .tcard { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .tcard-head { padding: 16px 22px; border-bottom: 1px solid var(--border); background: var(--bg-light); }
+    .tcard-title { font-size: 14px; font-weight: 700; }
+    .tcard-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    th {
+      padding: 11px 22px; text-align: left;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-secondary);
+      background: var(--bg-light); border-bottom: 1px solid var(--border);
+    }
+    th:not(:first-child) { text-align: center; }
+
+    td {
+      padding: 13px 22px; font-size: 14px; color: var(--text);
+      border-bottom: 1px solid var(--border-light);
+    }
+    td:not(:first-child) { text-align: center; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-light); }
+
+    .td-team { font-weight: 600; }
+    .td-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .td-big { font-weight: 700; font-size: 15px; }
+    .td-gap { font-size: 13px; font-weight: 500; color: var(--warning); }
+    .td-rate { font-weight: 600; color: var(--success); }
+    .td-low { font-weight: 700; font-size: 15px; color: var(--danger); }
+    .td-ok { font-weight: 700; font-size: 15px; color: var(--success); }
+
+    /* ── Empty State ── */
+    .empty { padding: 36px 22px; text-align: center; }
+    .empty-icon {
+      width: 44px; height: 44px; background: var(--primary-light); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+    }
+    .empty p { font-size: 13px; color: var(--text-secondary); }
+
+    /* ── Benchmark ── */
+    .benchmark {
+      margin: 14px 16px; padding: 12px 16px; border-radius: var(--radius-sm);
+      background: #FFFBEB; border: 1px solid #FDE68A;
+      font-size: 12px; color: #92400E; line-height: 1.5;
+    }
+    .benchmark strong { color: #78350F; }
+
+    /* ── Insights ── */
+    .insights-wrap { margin-top: 36px; }
+    .insights-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+    .icard { background: white; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+    .icard-head {
+      padding: 14px 22px; display: flex; align-items: center;
+      justify-content: space-between; cursor: pointer; user-select: none;
+    }
+    .icard-head:hover { background: var(--bg-light); }
+    .icard-label {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; font-weight: 600;
+    }
+    .tag {
+      font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px;
+      background: var(--primary-light); color: var(--primary);
+    }
+    .tag.funnel { background: #ECFDF5; color: #065F46; }
+    .icard-meta { font-size: 12px; color: var(--text-secondary); font-weight: 400; }
+    .chevron { color: var(--text-secondary); transition: transform 0.2s; }
+    .chevron.closed { transform: rotate(-90deg); }
+
+    .icard-body { padding: 4px 22px 18px; display: none; }
+    .icard-body.open { display: block; }
+    .ilist { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    .ilist li {
+      display: flex; gap: 11px; font-size: 14px; color: var(--text); line-height: 1.55;
+    }
+    .ilist li::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--primary); margin-top: 8px; flex-shrink: 0;
+    }
+
+    /* ── Toast ── */
+    .toasts { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--text); color: white; padding: 11px 18px;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+      box-shadow: var(--shadow-md); animation: toastIn 0.2s ease;
+      max-width: 300px; pointer-events: none;
+    }
+    .toast.success { background: #065F46; }
+    .toast.error { background: var(--danger); }
+    @keyframes toastIn { from { transform: translateX(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes toastOut { from { transform: none; opacity: 1; } to { transform: translateX(110%); opacity: 0; } }
+    .toast.out { animation: toastOut 0.2s ease forwards; }
+
+    /* ── Responsive ── */
+    @media (max-width: 920px) {
+      .panels-grid, .tables-grid { grid-template-columns: 1fr; }
+      .nav-tabs { gap: 2px; }
+      .nav-tab { padding: 7px 12px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav class="nav">
+  <a href="#" class="nav-logo">
+    <svg class="logo-icon" viewBox="0 0 34 34" fill="none">
+      <rect width="34" height="34" rx="8" fill="#4338CA"/>
+      <path d="M5 25 L9 13 L13 21 L17 9 L21 19 L25 15 L29 25" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="logo-text">Clari <span>Insights</span></span>
+  </a>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('create')">Create</button>
+    <button class="nav-tab disabled" title="Coming soon">Convert <span class="pill">Soon</span></button>
+    <button class="nav-tab disabled" title="Coming soon">Close <span class="pill">Soon</span></button>
+  </div>
+
+  <div class="nav-right">
+    <button class="icon-btn" onclick="openSettings()" title="API Settings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ── Settings Modal ── -->
+<div class="overlay" id="settingsModal" onclick="closeSettingsIfOverlay(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 class="modal-title">Settings</h2>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+
+    <div class="form-group">
+      <label class="label">Anthropic API Key</label>
+      <input type="password" class="input" id="apiKeyInput" placeholder="sk-ant-api03-…">
+      <p style="font-size:12px;color:var(--text-secondary);margin-top:6px;line-height:1.5;">
+        Stored only in your browser's localStorage. Sent directly to the Anthropic API — never to any other server.
+      </p>
+    </div>
+
+    <div class="form-group" style="margin-top:4px;">
+      <label class="label">Model</label>
+      <select class="input" id="modelSelect">
+        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — Recommended</option>
+        <option value="claude-opus-4-7">Claude Opus 4.7 — Most Capable</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — Fastest</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:12px;">Save Settings</button>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <div class="section-head">
+    <h1>Create</h1>
+    <p>Upload Clari analytics screenshots to extract pipeline coverage and funnel conversion insights.</p>
+  </div>
+
+  <!-- ── Upload Panels ── -->
+  <div class="panels-grid">
+
+    <!-- Pulse Panel -->
+    <div class="panel">
+      <div class="panel-title">Pulse — Next Quarter Upload</div>
+      <div class="panel-sub">Upload a Clari Pulse NQ screenshot to analyze pipeline coverage ratios</div>
+
+      <div class="drop-zone" id="pulseZone"
+           ondragover="onDragOver(event,'pulse')"
+           ondragleave="onDragLeave('pulse')"
+           ondrop="onDrop(event,'pulse')">
+        <input type="file" id="pulseFile" accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.csv"
+               onchange="onFileChange(event,'pulse')">
+        <div class="dz-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="dz-title">Drop screenshot here</div>
+        <div class="dz-sub"><em>Click to browse</em> &nbsp;·&nbsp; PNG, JPG, PDF, CSV</div>
+      </div>
+
+      <div class="file-preview" id="pulsePrev">
+        <div class="fp-thumb" id="pulseThumb">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="fp-info">
+          <div class="fp-name" id="pulseFileName">—</div>
+          <div class="fp-size" id="pulseFileSize">—</div>
+        </div>
+        <button class="fp-remove" onclick="removeFile('pulse')" title="Remove">×</button>
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="pulseTeam">Team Name / Leader</label>
+        <input type="text" class="input" id="pulseTeam" placeholder="e.g. Ben, Elizabeth, CRO Team"
+               oninput="updateBtn('pulse')">
+      </div>
+
+      <button class="btn btn-primary" id="pulseBtn" disabled onclick="runPulseAnalysis()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Analyze Pulse
+      </button>
+    </div>
+
+    <!-- Funnel Panel -->
+    <div class="panel">
+      <div class="panel-title">Funnel — Conversion by Lead Source Upload</div>
+      <div class="panel-sub">Upload a Clari Funnel screenshot to analyze win rates by lead source</div>
+
+      <div class="drop-zone" id="funnelZone"
+           ondragover="onDragOver(event,'funnel')"
+           ondragleave="onDragLeave('funnel')"
+           ondrop="onDrop(event,'funnel')">
+        <input type="file" id="funnelFile" accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.csv"
+               onchange="onFileChange(event,'funnel')">
+        <div class="dz-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="dz-title">Drop screenshot here</div>
+        <div class="dz-sub"><em>Click to browse</em> &nbsp;·&nbsp; PNG, JPG, PDF, CSV</div>
+      </div>
+
+      <div class="file-preview" id="funnelPrev">
+        <div class="fp-thumb" id="funnelThumb">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="fp-info">
+          <div class="fp-name" id="funnelFileName">—</div>
+          <div class="fp-size" id="funnelFileSize">—</div>
+        </div>
+        <button class="fp-remove" onclick="removeFile('funnel')" title="Remove">×</button>
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="funnelSource">Lead Source</label>
+        <input type="text" class="input" id="funnelSource" placeholder="e.g. Cold Call, Inbound, Partner"
+               oninput="updateBtn('funnel')">
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="funnelTeam">Team Name / Leader</label>
+        <input type="text" class="input" id="funnelTeam" placeholder="e.g. Ben, Elizabeth, AE Team"
+               oninput="updateBtn('funnel')">
+      </div>
+
+      <button class="btn btn-primary" id="funnelBtn" disabled onclick="runFunnelAnalysis()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Analyze Funnel
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── Results ── -->
+  <div class="results-head">
+    <div class="results-title">Analysis Results</div>
+    <div class="export-row" id="exportRow" style="display:none;">
+      <button class="btn btn-outline" onclick="doExportPDF()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
+        Export PDF
+      </button>
+      <button class="btn btn-outline" onclick="doExportPPT()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        Export PPT
+      </button>
+      <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+
+  <div class="tables-grid">
+    <!-- Coverage Ratios -->
+    <div class="tcard">
+      <div class="tcard-head">
+        <div class="tcard-title">Coverage Ratios</div>
+        <div class="tcard-sub">Suggested vs. Current NQ pipeline coverage by team</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Team / Leader</th>
+            <th>Suggested</th>
+            <th>Current NQ</th>
+            <th>Stage Gap</th>
+          </tr>
+        </thead>
+        <tbody id="pulseBody"></tbody>
+      </table>
+      <div class="benchmark" id="pulseBench" style="display:none;">
+        <strong>Benchmark:</strong> Similar sized top performing companies typically see an average of 3x coverage, ranging from 2 to 4x. Below suggested coverage means there is a pipeline gap; above the benchmark range implies a conversion issue.
+      </div>
+    </div>
+
+    <!-- Win Rate by Lead Source -->
+    <div class="tcard">
+      <div class="tcard-head">
+        <div class="tcard-title">Win Rate by Lead Source</div>
+        <div class="tcard-sub">SDR, Sales Rep, and Marketing conversion rates</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Team / Leader</th>
+            <th>SDR</th>
+            <th>Sales Rep</th>
+            <th>Marketing</th>
+          </tr>
+        </thead>
+        <tbody id="funnelBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="insights-wrap" id="insightsWrap" style="display:none;">
+    <div class="insights-title">AI Insights</div>
+    <div id="insightsList"></div>
+  </div>
+
+</main>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const S = {
+  apiKey: '',
+  model: 'claude-sonnet-4-6',
+  pulse: [],    // { id, team, suggested, current, stageGap, insights, ts }
+  funnel: [],   // { id, team, source, sdr, salesRep, marketing, insights, ts }
+};
+
+const staged = { pulse: null, funnel: null };
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('clariState') || '{}');
+    S.apiKey  = saved.apiKey  || '';
+    S.model   = saved.model   || 'claude-sonnet-4-6';
+    S.pulse   = saved.pulse   || [];
+    S.funnel  = saved.funnel  || [];
+  } catch(e) { /* ignore corrupt storage */ }
+
+  document.getElementById('apiKeyInput').value = S.apiKey;
+  document.getElementById('modelSelect').value = S.model;
+  renderPulse();
+  renderFunnel();
+  renderInsights();
+}
+
+function persist() {
+  localStorage.setItem('clariState', JSON.stringify(S));
+}
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function openSettings()  { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function closeSettingsIfOverlay(e) { if (e.target === e.currentTarget) closeSettings(); }
+
+function saveSettings() {
+  S.apiKey = document.getElementById('apiKeyInput').value.trim();
+  S.model  = document.getElementById('modelSelect').value;
+  persist();
+  closeSettings();
+  toast('Settings saved', 'success');
+}
+
+// ═══════════════════════════════════════════
+// FILE HANDLING
+// ═══════════════════════════════════════════
+function onDragOver(e, type) {
+  e.preventDefault();
+  document.getElementById(type + 'Zone').classList.add('dragover');
+}
+function onDragLeave(type) {
+  document.getElementById(type + 'Zone').classList.remove('dragover');
+}
+function onDrop(e, type) {
+  e.preventDefault();
+  document.getElementById(type + 'Zone').classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f) acceptFile(f, type);
+}
+function onFileChange(e, type) {
+  const f = e.target.files[0];
+  if (f) acceptFile(f, type);
+}
+
+function acceptFile(file, type) {
+  staged[type] = file;
+
+  const zone  = document.getElementById(type + 'Zone');
+  const prev  = document.getElementById(type + 'Prev');
+  const thumb = document.getElementById(type + 'Thumb');
+  const name  = document.getElementById(type + 'FileName');
+  const size  = document.getElementById(type + 'FileSize');
+
+  name.textContent = file.name;
+  size.textContent = fmtSize(file.size);
+  zone.style.display = 'none';
+  prev.classList.add('show');
+
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = e => { thumb.innerHTML = `<img src="${e.target.result}" alt="">`; };
+    reader.readAsDataURL(file);
+  } else {
+    thumb.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  }
+
+  updateBtn(type);
+}
+
+function removeFile(type) {
+  staged[type] = null;
+  document.getElementById(type + 'Zone').style.display = '';
+  document.getElementById(type + 'Prev').classList.remove('show');
+  document.getElementById(type + 'File').value = '';
+  updateBtn(type);
+}
+
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/1024/1024).toFixed(1) + ' MB';
+}
+
+// ═══════════════════════════════════════════
+// BUTTON STATE
+// ═══════════════════════════════════════════
+function updateBtn(type) {
+  if (type === 'pulse') {
+    const ok = staged.pulse && document.getElementById('pulseTeam').value.trim();
+    document.getElementById('pulseBtn').disabled = !ok;
+  } else {
+    const ok = staged.funnel
+      && document.getElementById('funnelSource').value.trim()
+      && document.getElementById('funnelTeam').value.trim();
+    document.getElementById('funnelBtn').disabled = !ok;
+  }
+}
+
+// ═══════════════════════════════════════════
+// CLAUDE API
+// ═══════════════════════════════════════════
+async function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function callClaude(imageB64, mimeType, prompt) {
+  if (!S.apiKey) {
+    openSettings();
+    throw new Error('Add your Anthropic API key in Settings to run analysis.');
+  }
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': S.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: S.model,
+      max_tokens: 2048,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mimeType, data: imageB64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+function extractJSON(text) {
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('Could not parse structured data from AI response.');
+  return JSON.parse(m[0]);
+}
+
+// ═══════════════════════════════════════════
+// PULSE ANALYSIS
+// ═══════════════════════════════════════════
+async function runPulseAnalysis() {
+  const file = staged.pulse;
+  const team = document.getElementById('pulseTeam').value.trim();
+  if (!file || !team) return;
+
+  if (!file.type.startsWith('image/')) {
+    toast('AI vision analysis requires an image file (PNG, JPG, WebP). Please upload a screenshot.', 'error');
+    return;
+  }
+
+  setLoading('pulseBtn', true, 'Analyzing…');
+
+  try {
+    const b64 = await toBase64(file);
+
+    const prompt = `You are analyzing a Clari Pulse dashboard screenshot for team/leader: "${team}".
+
+This is a Clari revenue analytics tool showing Next Quarter (NQ) pipeline coverage ratios.
+
+Extract:
+1. Suggested Coverage — the AI-recommended coverage multiplier (e.g. "2.3")
+2. Current NQ Coverage — the actual current coverage multiplier (e.g. "3.2")
+3. Biggest Stage Gap — the pipeline stage with the largest dollar difference between current and suggested pipeline (e.g. "$2M in Stage 3" or "$2M in S3-Vendor Choice")
+
+Return ONLY a valid JSON object — no preamble, no trailing text:
+{
+  "suggested": "2.3",
+  "current": "3.0",
+  "stageGap": "$2M in Stage 3",
+  "insights": [
+    "Specific insight about whether coverage is above/below the 3x benchmark",
+    "Insight about what the stage gap means for revenue risk",
+    "Actionable recommendation to close the gap or address the conversion issue",
+    "Insight comparing suggested vs current and what that implies"
+  ]
+}
+
+Benchmark context: 3x is ideal (range 2–4x). Current < Suggested → pipeline gap. Current > 4x → likely conversion issue.
+If exact numbers are not visible, estimate from available visual data.`;
+
+    const raw = await callClaude(b64, file.type, prompt);
+    const d   = extractJSON(raw);
+
+    const row = {
+      id: String(Date.now()),
+      team,
+      suggested: d.suggested || 'N/A',
+      current:   d.current   || 'N/A',
+      stageGap:  d.stageGap  || 'N/A',
+      insights:  Array.isArray(d.insights) ? d.insights : [],
+      ts:        new Date().toLocaleString(),
+    };
+
+    S.pulse.push(row);
+    persist();
+    renderPulse();
+    renderInsights();
+
+    removeFile('pulse');
+    document.getElementById('pulseTeam').value = '';
+    updateBtn('pulse');
+
+    toast(`Coverage analysis added for ${team}`, 'success');
+
+  } catch(e) {
+    toast(e.message, 'error');
+  } finally {
+    setLoading('pulseBtn', false, `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analyze Pulse`);
+    updateBtn('pulse');
+  }
+}
+
+// ═══════════════════════════════════════════
+// FUNNEL ANALYSIS
+// ═══════════════════════════════════════════
+async function runFunnelAnalysis() {
+  const file   = staged.funnel;
+  const source = document.getElementById('funnelSource').value.trim();
+  const team   = document.getElementById('funnelTeam').value.trim();
+  if (!file || !source || !team) return;
+
+  if (!file.type.startsWith('image/')) {
+    toast('AI vision analysis requires an image file (PNG, JPG, WebP). Please upload a screenshot.', 'error');
+    return;
+  }
+
+  setLoading('funnelBtn', true, 'Analyzing…');
+
+  try {
+    const b64 = await toBase64(file);
+
+    const prompt = `You are analyzing a Clari Funnel/Conversion dashboard screenshot.
+Lead Source: "${source}"
+Team/Leader: "${team}"
+
+This Clari screen shows how deals convert through pipeline stages with win rates.
+
+Extract win rates for these three seller types:
+1. SDR — sales development representative sourced deals
+2. Sales Rep (AE) — account executive or direct sales rep
+3. Marketing — marketing or inbound sourced deals
+
+Also look for the overall win rate from Stage 1 to Closed-Won.
+
+Return ONLY a valid JSON object — no preamble, no trailing text:
+{
+  "sdr": "15.00%",
+  "salesRep": "26.00%",
+  "marketing": "18.00%",
+  "overallWinRate": "54.79%",
+  "insights": [
+    "Which channel has the highest win rate and why that matters",
+    "Which channel has the lowest win rate and the revenue opportunity",
+    "The biggest conversion drop-off stage and its impact",
+    "Specific recommendation to improve overall funnel conversion"
+  ]
+}
+
+If the three-way breakdown is not shown, derive best estimates from visible conversion percentages by stage.
+If a specific channel is not shown, use "N/A" for that field.`;
+
+    const raw = await callClaude(b64, file.type, prompt);
+    const d   = extractJSON(raw);
+
+    const row = {
+      id:           String(Date.now()),
+      team,
+      source,
+      sdr:          d.sdr          || 'N/A',
+      salesRep:     d.salesRep     || 'N/A',
+      marketing:    d.marketing    || 'N/A',
+      overallWinRate: d.overallWinRate || 'N/A',
+      insights:     Array.isArray(d.insights) ? d.insights : [],
+      ts:           new Date().toLocaleString(),
+    };
+
+    S.funnel.push(row);
+    persist();
+    renderFunnel();
+    renderInsights();
+
+    removeFile('funnel');
+    document.getElementById('funnelSource').value = '';
+    document.getElementById('funnelTeam').value   = '';
+    updateBtn('funnel');
+
+    toast(`Funnel analysis added for ${team}`, 'success');
+
+  } catch(e) {
+    toast(e.message, 'error');
+  } finally {
+    setLoading('funnelBtn', false, `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analyze Funnel`);
+    updateBtn('funnel');
+  }
+}
+
+function setLoading(btnId, on, label) {
+  const btn = document.getElementById(btnId);
+  btn.classList.toggle('btn-loading', on);
+  btn.disabled = on;
+  if (on) {
+    btn.innerHTML = `<span class="spinner"></span> ${label}`;
+  } else {
+    btn.innerHTML = label;
+  }
+}
+
+// ═══════════════════════════════════════════
+// RENDER TABLES
+// ═══════════════════════════════════════════
+function renderPulse() {
+  const tbody = document.getElementById('pulseBody');
+  const bench = document.getElementById('pulseBench');
+
+  if (!S.pulse.length) {
+    tbody.innerHTML = emptyRow(4, 'bar-chart-2', 'Upload a Pulse screenshot and run Analyze to see coverage ratios');
+    bench.style.display = 'none';
+  } else {
+    bench.style.display = 'block';
+    tbody.innerHTML = S.pulse.map(r => {
+      const cur = parseFloat(r.current);
+      const sug = parseFloat(r.suggested);
+      let cls = 'td-big';
+      if (!isNaN(cur) && !isNaN(sug)) {
+        cls = cur < sug ? 'td-low' : cur > 4 ? 'td-big' : 'td-ok';
+      }
+      return `<tr>
+        <td><div class="td-team">${esc(r.team)}</div></td>
+        <td><span class="td-big">${esc(r.suggested)}x</span></td>
+        <td><span class="${cls}">${esc(r.current)}x</span></td>
+        <td><span class="td-gap">${esc(r.stageGap)}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  refreshExportBtn();
+}
+
+function renderFunnel() {
+  const tbody = document.getElementById('funnelBody');
+
+  if (!S.funnel.length) {
+    tbody.innerHTML = emptyRow(4, 'filter', 'Upload a Funnel screenshot and run Analyze to see win rates');
+  } else {
+    tbody.innerHTML = S.funnel.map(r => `<tr>
+      <td>
+        <div class="td-team">${esc(r.team)}</div>
+        <div class="td-sub">${esc(r.source)}</div>
+      </td>
+      <td><span class="td-rate">${esc(r.sdr)}</span></td>
+      <td><span class="td-rate">${esc(r.salesRep)}</span></td>
+      <td><span class="td-rate">${esc(r.marketing)}</span></td>
+    </tr>`).join('');
+  }
+
+  refreshExportBtn();
+}
+
+function renderInsights() {
+  const all = [
+    ...S.pulse.filter(r => r.insights?.length).map(r => ({ ...r, type: 'pulse' })),
+    ...S.funnel.filter(r => r.insights?.length).map(r => ({ ...r, type: 'funnel' })),
+  ].sort((a, b) => (a.ts < b.ts ? -1 : 1));
+
+  const wrap = document.getElementById('insightsWrap');
+  const list = document.getElementById('insightsList');
+
+  if (!all.length) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = 'block';
+  list.innerHTML = all.map(item => {
+    const isPulse = item.type === 'pulse';
+    const label   = isPulse ? 'Coverage' : 'Conversion';
+    const tagCls  = isPulse ? 'tag' : 'tag funnel';
+    const sub     = isPulse ? '' : ` · ${item.source}`;
+    return `<div class="icard">
+      <div class="icard-head" onclick="toggleInsight('${item.id}')">
+        <div class="icard-label">
+          <span class="${tagCls}">${label}</span>
+          ${esc(item.team)}${esc(sub)}
+          <span class="icard-meta">${item.ts}</span>
+        </div>
+        <svg class="chevron" id="chev-${item.id}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="icard-body open" id="ibody-${item.id}">
+        <ul class="ilist">
+          ${item.insights.map(i => `<li>${esc(i)}</li>`).join('')}
+        </ul>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleInsight(id) {
+  const body = document.getElementById('ibody-' + id);
+  const chev = document.getElementById('chev-' + id);
+  const isOpen = body.classList.toggle('open');
+  chev.classList.toggle('closed', !isOpen);
+}
+
+function refreshExportBtn() {
+  const has = S.pulse.length || S.funnel.length;
+  document.getElementById('exportRow').style.display = has ? 'flex' : 'none';
+}
+
+function emptyRow(cols, icon, msg) {
+  const icons = {
+    'bar-chart-2': `<path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>`,
+    'filter':      `<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>`,
+  };
+  return `<tr><td colspan="${cols}">
+    <div class="empty">
+      <div class="empty-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icons[icon]||''}</svg>
+      </div>
+      <p>${msg}</p>
+    </div>
+  </td></tr>`;
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════
+// CLEAR
+// ═══════════════════════════════════════════
+function clearAll() {
+  if (!confirm('Clear all analysis results? This cannot be undone.')) return;
+  S.pulse = []; S.funnel = [];
+  persist();
+  renderPulse(); renderFunnel(); renderInsights();
+  toast('Results cleared');
+}
+
+// ═══════════════════════════════════════════
+// EXPORT PDF
+// ═══════════════════════════════════════════
+function doExportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc  = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const PRIM = [67, 56, 202];
+  const DARK = [17, 24, 39];
+  const GRAY = [107, 114, 128];
+  const PALE = [249, 250, 251];
+  const W = [255,255,255];
+
+  // Header band
+  doc.setFillColor(...PRIM);
+  doc.rect(0, 0, 210, 30, 'F');
+  doc.setTextColor(...W);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(20);
+  doc.text('Clari Insights — Revenue Analytics', 15, 14);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text(`Create Section  ·  Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`, 15, 23);
+
+  let y = 40;
+
+  // Coverage Ratios
+  if (S.pulse.length) {
+    doc.setTextColor(...DARK); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+    doc.text('Coverage Ratios', 15, y); y += 5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...GRAY);
+    doc.text('Suggested vs. Current NQ pipeline coverage by team', 15, y); y += 4;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Team / Leader','Suggested','Current NQ','Stage Gap']],
+      body: S.pulse.map(r => [r.team, r.suggested+'x', r.current+'x', r.stageGap]),
+      styles: { fontSize: 10, cellPadding: 4 },
+      headStyles: { fillColor: PRIM, textColor: W, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: PALE },
+      margin: { left:15, right:15 },
+    });
+    y = doc.lastAutoTable.finalY + 4;
+
+    const bench = 'Benchmark: Similar sized top performing companies typically see an average of 3x coverage, ranging from 2 to 4x. Below suggested = pipeline gap; above 4x = conversion issue.';
+    const blines = doc.splitTextToSize(bench, 176);
+    doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
+    doc.rect(15, y, 180, blines.length*4.8+6, 'FD');
+    doc.setTextColor(146,64,14); doc.setFontSize(8.5);
+    doc.text(blines, 18, y+5); y += blines.length*4.8+12;
+  }
+
+  // Win Rate
+  if (S.funnel.length) {
+    if (y > 220) { doc.addPage(); y = 20; }
+    doc.setTextColor(...DARK); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+    doc.text('Win Rate by Lead Source', 15, y); y += 5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...GRAY);
+    doc.text('SDR, Sales Rep, and Marketing conversion rates', 15, y); y += 4;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Team / Leader','Lead Source','SDR','Sales Rep','Marketing']],
+      body: S.funnel.map(r => [r.team, r.source, r.sdr, r.salesRep, r.marketing]),
+      styles: { fontSize: 10, cellPadding: 4 },
+      headStyles: { fillColor: PRIM, textColor: W, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: PALE },
+      margin: { left:15, right:15 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // Insights
+  const allInsights = [
+    ...S.pulse.filter(r=>r.insights?.length).map(r=>({...r,type:'pulse'})),
+    ...S.funnel.filter(r=>r.insights?.length).map(r=>({...r,type:'funnel'})),
+  ];
+  if (allInsights.length) {
+    if (y > 220) { doc.addPage(); y = 20; }
+    doc.setTextColor(...DARK); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+    doc.text('AI Insights', 15, y); y += 8;
+
+    allInsights.forEach(item => {
+      if (y > 255) { doc.addPage(); y = 20; }
+      const tag   = item.type === 'pulse' ? '[Coverage]' : '[Conversion]';
+      const extra = item.type === 'funnel' ? `  ·  ${item.source}` : '';
+      doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(...PRIM);
+      doc.text(`${tag}  ${item.team}${extra}`, 15, y); y += 6;
+
+      item.insights.forEach(ins => {
+        if (y > 268) { doc.addPage(); y = 20; }
+        const lines = doc.splitTextToSize(`• ${ins}`, 172);
+        doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(...GRAY);
+        doc.text(lines, 18, y); y += lines.length*4.4+2;
+      });
+      y += 4;
+    });
+  }
+
+  // Page numbers
+  const total = doc.internal.getNumberOfPages();
+  for (let i=1; i<=total; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8); doc.setTextColor(...GRAY);
+    doc.text(`Clari Insights  ·  Page ${i} of ${total}`, 105, 292, { align:'center' });
+  }
+
+  doc.save(`clari-insights-${isoDate()}.pdf`);
+  toast('PDF exported', 'success');
+}
+
+// ═══════════════════════════════════════════
+// EXPORT PPT
+// ═══════════════════════════════════════════
+async function doExportPPT() {
+  const pptx = new PptxGenJS();
+  pptx.title  = 'Clari Insights — Revenue Analytics';
+  pptx.layout = 'LAYOUT_WIDE';
+
+  const PRIM='4338CA', WHITE='FFFFFF', DARK='111827', GRAY='6B7280',
+        PALE='F3F4FF', WARN='D97706', OK='065F46', LOW='DC2626', BAND='EEF2FF';
+
+  // ─ Title slide
+  const ts = pptx.addSlide();
+  ts.addShape(pptx.ShapeType.rect, { x:0,y:0,w:'100%',h:'100%', fill:{color:PRIM} });
+  ts.addText('Clari Insights', { x:1,y:1.6,w:11,h:1.2, fontSize:44, bold:true, color:WHITE, align:'center' });
+  ts.addText('Revenue Analytics — Create Section', { x:1,y:2.95,w:11,h:0.7, fontSize:22, color:'C7D2FE', align:'center' });
+  ts.addText(`Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
+    { x:1,y:3.75,w:11,h:0.55, fontSize:15, color:'A5B4FC', align:'center' });
+
+  // ─ Coverage Ratios slide
+  if (S.pulse.length) {
+    const s = pptx.addSlide();
+    s.addShape(pptx.ShapeType.rect, { x:0,y:0,w:'100%',h:1.3, fill:{color:PRIM} });
+    s.addText('Coverage Ratios', { x:0.4,y:0.18,w:12.5,h:0.7, fontSize:26, bold:true, color:WHITE });
+    s.addText('Suggested vs. Current NQ pipeline coverage by team',
+      { x:0.4,y:0.82,w:12.5,h:0.38, fontSize:13, color:'C7D2FE' });
+
+    const rows = [
+      [
+        { text:'Team / Leader', options:{ bold:true, color:WHITE, fill:PRIM } },
+        { text:'Suggested',     options:{ bold:true, color:WHITE, fill:PRIM, align:'center' } },
+        { text:'Current NQ',    options:{ bold:true, color:WHITE, fill:PRIM, align:'center' } },
+        { text:'Stage Gap',     options:{ bold:true, color:WHITE, fill:PRIM, align:'center' } },
+      ],
+      ...S.pulse.map((r,i) => {
+        const bg = i%2===0 ? WHITE : PALE;
+        const cur = parseFloat(r.current), sug = parseFloat(r.suggested);
+        const col = (!isNaN(cur)&&!isNaN(sug)) ? (cur<sug ? LOW : cur>4 ? WARN : OK) : DARK;
+        return [
+          { text:r.team,      options:{ bold:true, fill:bg } },
+          { text:r.suggested+'x', options:{ fill:bg, align:'center', bold:true } },
+          { text:r.current+'x',   options:{ fill:bg, align:'center', bold:true, color:col } },
+          { text:r.stageGap,  options:{ fill:bg, align:'center', color:WARN } },
+        ];
+      }),
+    ];
+    s.addTable(rows, { x:0.4,y:1.45,w:12.5, colW:[3.5,2.5,2.5,4], border:{type:'solid',pt:1,color:'E5E7EB'}, fontSize:13, rowH:0.52 });
+
+    const benchY = 1.55 + (S.pulse.length+1)*0.55;
+    if (benchY < 6.8) {
+      s.addShape(pptx.ShapeType.rect, { x:0.4,y:benchY,w:12.5,h:0.72, fill:{color:'FFFBEB'}, line:{color:'FDE68A',pt:1} });
+      s.addText('Benchmark: Top performing companies average 3x coverage (range 2–4x). Below suggested = pipeline gap; above 4x = potential conversion issue.',
+        { x:0.55,y:benchY+0.08,w:12.2,h:0.6, fontSize:9.5, color:'92400E', italic:true });
+    }
+  }
+
+  // ─ Win Rate slide
+  if (S.funnel.length) {
+    const s = pptx.addSlide();
+    s.addShape(pptx.ShapeType.rect, { x:0,y:0,w:'100%',h:1.3, fill:{color:PRIM} });
+    s.addText('Win Rate by Lead Source', { x:0.4,y:0.18,w:12.5,h:0.7, fontSize:26, bold:true, color:WHITE });
+    s.addText('SDR, Sales Rep, and Marketing conversion rates',
+      { x:0.4,y:0.82,w:12.5,h:0.38, fontSize:13, color:'C7D2FE' });
+
+    const rows = [
+      [
+        { text:'Team / Leader', options:{ bold:true, color:WHITE, fill:PRIM } },
+        { text:'Lead Source',   options:{ bold:true, color:WHITE, fill:PRIM, align:'center' } },
+        { text:'SDR',           options:{ bold:true, color:WHITE, fill:PRIM, align:'center' } },
+        { text:'Sales Rep',     options:{ bold:true, color:WHITE, fill:PRIM, align:'center' } },
+        { text:'Marketing',     options:{ bold:true, color:WHITE, fill:PRIM, align:'center' } },
+      ],
+      ...S.funnel.map((r,i) => {
+        const bg = i%2===0 ? WHITE : PALE;
+        return [
+          { text:r.team,      options:{ bold:true, fill:bg } },
+          { text:r.source,    options:{ fill:bg, align:'center' } },
+          { text:r.sdr,       options:{ fill:bg, align:'center', bold:true, color:OK } },
+          { text:r.salesRep,  options:{ fill:bg, align:'center', bold:true, color:OK } },
+          { text:r.marketing, options:{ fill:bg, align:'center', bold:true, color:OK } },
+        ];
+      }),
+    ];
+    s.addTable(rows, { x:0.4,y:1.45,w:12.5, colW:[2.5,2.5,2,2,2], border:{type:'solid',pt:1,color:'E5E7EB'}, fontSize:13, rowH:0.52 });
+  }
+
+  // ─ Insights slide(s)
+  const allIns = [
+    ...S.pulse.filter(r=>r.insights?.length).map(r=>({...r,type:'pulse'})),
+    ...S.funnel.filter(r=>r.insights?.length).map(r=>({...r,type:'funnel'})),
+  ];
+  if (allIns.length) {
+    const s = pptx.addSlide();
+    s.addShape(pptx.ShapeType.rect, { x:0,y:0,w:'100%',h:1.3, fill:{color:PRIM} });
+    s.addText('AI Insights', { x:0.4,y:0.18,w:12.5,h:0.7, fontSize:26, bold:true, color:WHITE });
+    s.addText('Key findings and recommendations from your Clari analysis',
+      { x:0.4,y:0.82,w:12.5,h:0.38, fontSize:13, color:'C7D2FE' });
+
+    let yp = 1.5;
+    allIns.forEach(item => {
+      const tag   = item.type === 'pulse' ? '[Coverage]' : '[Conversion]';
+      const extra = item.type === 'funnel' ? `  ·  ${item.source}` : '';
+      s.addText(`${tag}  ${item.team}${extra}`, { x:0.4,y:yp,w:12.5,h:0.42, fontSize:13, bold:true, color:PRIM });
+      yp += 0.42;
+      item.insights.slice(0,3).forEach(ins => {
+        s.addText(`•  ${ins}`, { x:0.6,y:yp,w:12.2,h:0.42, fontSize:10.5, color:DARK });
+        yp += 0.4;
+      });
+      yp += 0.15;
+    });
+  }
+
+  await pptx.writeFile({ fileName:`clari-insights-${isoDate()}.pptx` });
+  toast('PowerPoint exported', 'success');
+}
+
+function isoDate() { return new Date().toISOString().slice(0,10); }
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function toast(msg, type='') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('out');
+    setTimeout(() => t.remove(), 220);
+  }, 3600);
+}
+
+// ═══════════════════════════════════════════
+// TABS (stub for future sections)
+// ═══════════════════════════════════════════
+function switchTab(name) { /* only 'create' active for now */ }
+
+// ═══════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
